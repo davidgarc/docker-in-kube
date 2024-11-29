@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  volumes:
+    - name: docker-tls-certdir
+      emptyDir: {}
+  containers:
+    - name: docker-private
+      image: docker:20.10
+      command: ["docker", "run", "-p", "80:8000", "nginx"]
+      env:
+        - name: DOCKER_HOST
+          value: tcp://localhost:2375
+      volumeMounts:
+        - name: docker-tls-certdir
+          mountPath: /certs
+    - name: dind-daemon
+      image: docker:20.10-dind
+      command: ["dockerd", "--host", "tcp://127.0.0.1:2375"]
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: docker-tls-certdir
+          mountPath: /certs
